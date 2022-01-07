@@ -43,8 +43,8 @@ return [
                 'useTLS' => true,
                 'encrypted' => true,
                 'curl_options' => [
-                    CURLOPT_SSL_VERIFYHOST => 0,
-                    CURLOPT_SSL_VERIFYPEER => 0,
+                    CURLOPT_SSL_VERIFYHOST => false,
+                    CURLOPT_SSL_VERIFYPEER => false,
                 ],
             ],
         ],

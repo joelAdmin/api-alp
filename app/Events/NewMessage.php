@@ -47,6 +47,9 @@ class NewMessage implements ShouldBroadcast
         $user_receptor = User::find($this->message->receptor_id);
         $user_emisor = User::find($this->message->emisor_id);
         return ['emisor_id' => $user_emisor->usuario_id,
-                    'receptor_id' => $user_receptor->usuario_id];
+                    'receptor_id' => $user_receptor->usuario_id,
+                        'chat_id' => $this->message->chat_id,
+                            'user_receptor' => $user_receptor,
+                                'user_emisor' => $user_emisor];
     }
 }

@@ -30,6 +30,8 @@ Route::post('login', [AuthController::class, 'login']);
 //Route::get('sendMessage', [MessageController::class, 'sendMessage']);
 
 Route::group(['middleware'=>'auth:api'], function(){
+	Route::post('sendMessageFile', [MessageController::class, 'sendMessageFile']);
+    Route::post('sendMessageAudio', [MessageController::class, 'sendMessageAudio']);
     Route::post('sendMessage', [MessageController::class, 'sendMessage']);
     Route::get('all_2', [ChatController::class, 'all_2']);
     Route::get('logout', [AuthController::class, 'logout']);
