@@ -40,4 +40,5 @@ Route::group(['middleware'=>'auth:api'], function(){
     Route::get('chatsAuthM/{id}', [ChatController::class, 'allAuthM']);
     Route::get('subChatAuthM/{id}', [ChatController::class, 'subAllAuthM']);
     Route::get('getMessage/{id}', [MessageController::class, 'show']);
+	Route::get('download/{id}', [MessageController::class, 'download']);
 });

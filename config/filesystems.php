@@ -34,6 +34,11 @@ return [
             'driver' => 'local',
             'root' => storage_path('app'),
         ],
+		
+		'messages' => [
+            'driver' => 'local',
+            'root' => storage_path('app/messages'),
+        ],
 
         'public' => [
             'driver' => 'local',

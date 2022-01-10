@@ -83,6 +83,14 @@ class MessageController extends Controller
         }    
     }
 	
+	public function download($id){
+		$message = Message::find($id);
+		if(!empty($message) && (auth()->user()->usuario_id == $message->receptor_id || auth()->user()->usuario_id == $message->emisor_id) ){	
+			$path_upload = 'images/uploads/attachment/chats/'.$message->chat_id;
+			return \Storage::disk('messages')->download($path_upload.'/'.json_decode($message->mensaje)->upload_data->nuevo_nombre);
+		}
+	}
+	
 	public function sendMessageFile(Request $request){
        $request->request->add(['fecha'=>date('Y-m-d'), 'estatus'=>1, 'attachment'=>1]);
        $path_upload	= 'images/uploads/attachment/chats/'.$request->get("chat_id");
@@ -124,13 +132,13 @@ class MessageController extends Controller
         $message->attachment = $request->get('attachment');
         $message->ogg = $request->get('ogg');
 		
+		$directoryRaiz = \Storage::disk('messages');
+		
         if($message->save()){
-           /* if (!\File::exists($path_upload)){
-                \File::makeDirectory($path_upload, 0775);
+			if(!$directoryRaiz->exists($path_upload)){
+                $directoryRaiz->makeDirectory($path_upload, 0775);
             }
-            \File::copy($archivo, $path_upload.'/'.$name);*/
-            \Storage::disk('local')->put('new_name_'.$name,  \File::get($archivo));  
-
+            $directoryRaiz->put($path_upload.'/'.$name,  \File::get($archivo));  
             broadcast(new \App\Events\NewMessage($message));
             return response()->json([
                 'res' => true, 
