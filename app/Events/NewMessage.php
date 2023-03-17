@@ -11,6 +11,7 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use App\Models\Message;
 use App\Models\User;
+use App\Models\Chat;
 
 class NewMessage implements ShouldBroadcast
 {
@@ -44,8 +45,15 @@ class NewMessage implements ShouldBroadcast
     }
 
     public function broadcastWith(){
-        $user_receptor = User::find($this->message->receptor_id);
-        $user_emisor = User::find($this->message->emisor_id);
+        //$user_receptor = User::find($this->message->receptor_id);
+        //$user_emisor = User::find($this->message->emisor_id);
+		//$user_receptor = User::find($this->message->receptor_id);
+        //$user_emisor = User::find($this->message->emisor_id);
+		
+		$chat = Chat::find($this->message->chat_id);
+		$user_receptor = $chat->userReceptor;
+        $user_emisor = $chat->userEmisor;
+		
         return ['emisor_id' => $user_emisor->usuario_id,
                     'receptor_id' => $user_receptor->usuario_id,
                         'chat_id' => $this->message->chat_id,

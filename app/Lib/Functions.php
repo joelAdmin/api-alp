@@ -77,7 +77,7 @@
 		{
 			if(
 				($image=='image/gif') || ($image=='	image/png') || ($image=='image/jpeg') || ($image=='image/png') || ($image=='application/x-shockwave-flash') || ($image=='image/psd')||
-				($image=='image/bmp') || ($image=='image/tiff') || ($image=='image/tiff') || ($image=='application/octet-stream')|| ($image=='	image/jp2') || ($image=='application/octet-stream')||
+				($image=='image/bmp') || ($image=='image/tiff') || ($image=='image/tiff') || ($image=='application/octet-stream')|| ($image=='	image/jp2') ||
 				($image=='image/iff') || ($image=='image/vnd.wap.wbmp') || ($image=='image/xbm') || ($image=='image/vnd.microsoft.icon')
 			)
 			{

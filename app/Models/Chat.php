@@ -23,6 +23,14 @@ class Chat extends Model
     protected $guarded = ['chat_id'];
 
     public function user(){
-        return $this->belongsTo('App\User', 'receptor_id', 'usuario_id');
+        return $this->belongsTo('App\Models\User', 'receptor_id', 'usuario_id');
+    }
+	
+	public function userReceptor(){
+        return $this->belongsTo('App\Models\User', 'receptor_id', 'usuario_id');
+    }
+	
+	 public function userEmisor(){
+        return $this->belongsTo('App\Models\User', 'emisor_id', 'usuario_id');
     }
 }

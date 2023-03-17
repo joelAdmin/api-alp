@@ -39,6 +39,19 @@ return [
             'driver' => 'local',
             'root' => storage_path('app/messages'),
         ],
+		
+		'ftp' => [
+			'driver' => 'ftp',
+			'host' => '142.93.22.67',
+			'username' => 'laravelchat',
+			'password' => 'Xgxl062*',
+			// Optional FTP Settings...
+			// 'port' => 21,
+			// 'root' => '',
+			// 'passive' => true,
+			// 'ssl' => true,
+			// 'timeout' => 30,
+		],
 
         'public' => [
             'driver' => 'local',

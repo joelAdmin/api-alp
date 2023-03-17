@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Message;
+use App\Lib\Functions;
 
 class MessageController extends Controller
 {
@@ -86,21 +87,38 @@ class MessageController extends Controller
 	public function download($id){
 		$message = Message::find($id);
 		if(!empty($message) && (auth()->user()->usuario_id == $message->receptor_id || auth()->user()->usuario_id == $message->emisor_id) ){	
-			$path_upload = 'images/uploads/attachment/chats/'.$message->chat_id;
-			return \Storage::disk('messages')->download($path_upload.'/'.json_decode($message->mensaje)->upload_data->nuevo_nombre);
+			$path_upload = 'images/uploads/attachment/chats/'.$message->chat_id.'/'.json_decode($message->mensaje)->upload_data->nuevo_nombre;
+			return \Storage::disk('messages')->download($path_upload);
+			//$url =\Storage::disk('messages')->get($path_upload.'/'.json_decode($message->mensaje)->upload_data->nuevo_nombre);
+			//$url = \Storage::disk('messages')->download($path_upload.'/'.json_decode($message->mensaje)->upload_data->nuevo_nombre);
+			//return 'data:image/jpg;charset=utf8;base64,'.base64_encode($url);
+			//return \Storage::disk('messages')->get($path_upload.'/'.json_decode($message->mensaje)->upload_data->nuevo_nombre);
+			//return \Storage::disk('messages')->get($path_upload);
 		}
 	}
 	
+	public function getMessage($id){
+		$message = Message::find($id);
+		if(!empty($message) && (auth()->user()->usuario_id == $message->receptor_id || auth()->user()->usuario_id == $message->emisor_id) ){	
+			return response()->json([$message]);
+		}
+	}
+	
+	
 	public function sendMessageFile(Request $request){
        $request->request->add(['fecha'=>date('Y-m-d'), 'estatus'=>1, 'attachment'=>1]);
-       $path_upload	= 'images/uploads/attachment/chats/'.$request->get("chat_id");
 	   $archivo = $request->file('file');
+       $prefix = 'messages';
+       //validamos si es un archivo oimagen
+       $isImage = (Functions::typeImage($archivo->getMimeType())==true)?true:false;
+       $path_upload = 'uploads/attachment/chats/'.$request->get("chat_id");
+       $path_upload	= ($isImage)?'images/'.$path_upload:'files/'.$path_upload;
 	   $raw_name = md5(rand(0,999).$archivo->getClientOriginalName());
-	   $name = $raw_name.'.'.$archivo->getClientOriginalExtension();
-	   $file_path= base_path().$path_upload.'/';
-	   $full_path = $file_path.$archivo->getClientOriginalName();
-		 
-	   $url_original = $archivo->getRealPath();
+	   $new_name = $raw_name.'.'.$archivo->getClientOriginalExtension();//nuevo nombre
+	   $file_path=  $prefix.'/'.$path_upload;
+	   $full_path = $file_path.'/'.$new_name;
+
+	   //$url_original = $archivo->getRealPath();
        $upload_data = [
             'file_name'=>$archivo->getClientOriginalName(),
 		   		'file_type'=>$archivo->getMimeType(),
@@ -111,18 +129,16 @@ class MessageController extends Controller
 								    "client_name"=>$archivo->getClientOriginalName(),
 									    "file_ext"=>'.'.$archivo->getClientOriginalExtension(),
 									        "file_size"=>$archivo->getSize(),
-										        "is_image"=>false,
+										        "is_image"=>$isImage,
 										            "image_width"=>null,
 											            "image_height"=>null,
 											                "image_type"=>"",
 												                "image_size_str"=>"",
-                                                                    "imagen_nueva"=>\Request::root().'/'.$path_upload.'/'.$name,
-                                              		                    "nuevo_nombre"=>$name
+                                                                    "imagen_nueva"=>\Request::root().'/'.$full_path,
+                                              		                    "nuevo_nombre"=>$new_name
         ];
 		 
-		$info_file = ['upload_data'=>$upload_data, 'path'=>$path_upload.'/'.$name];
-
-        $info_file_original = json_encode($info_file);
+		$info_file = ['upload_data'=>$upload_data, 'path'=>$full_path];
         $message = new Message();
         $message->chat_id = $request->get('chat_id');
         $message->fecha = $request->get('fecha');
@@ -138,7 +154,7 @@ class MessageController extends Controller
 			if(!$directoryRaiz->exists($path_upload)){
                 $directoryRaiz->makeDirectory($path_upload, 0775);
             }
-            $directoryRaiz->put($path_upload.'/'.$name,  \File::get($archivo));  
+            $directoryRaiz->put($path_upload.'/'.$new_name,  \File::get($archivo));  
             broadcast(new \App\Events\NewMessage($message));
             return response()->json([
                 'res' => true, 
@@ -150,8 +166,8 @@ class MessageController extends Controller
       }    
     }
 
-    /*
-    public function sendMessageFile(Request $request){
+    
+    public function sendMessageFileBK(Request $request){
        $request->request->add(['fecha'=>date('Y-m-d'), 'estatus'=>1, 'attachment'=>1]);
        $path_upload	= 'images/uploads/attachment/chats/'.$request->get("chat_id");
 	   $archivo = $request->file('file');
@@ -171,7 +187,7 @@ class MessageController extends Controller
 								    "client_name"=>$archivo->getClientOriginalName(),
 									    "file_ext"=>'.'.$archivo->getClientOriginalExtension(),
 									        "file_size"=>$archivo->getSize(),
-										        "is_image"=>false,
+										        "is_image"=>(Functions::typeImage($archivo->getMimeType())==true)?true:false,
 										            "image_width"=>null,
 											            "image_height"=>null,
 											                "image_type"=>"",
@@ -208,5 +224,5 @@ class MessageController extends Controller
                     'message' => "ERROR AL CREAR EL REGISTRO, GRACIAS"], 200);  
       }    
     }
-    **/
+    
 }

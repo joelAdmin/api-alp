@@ -23,6 +23,7 @@ use App\Http\Controllers\MessageController;
 //Broadcast::routes(['middleware' => ['auth:sanctum']]);
 Route::get('all', [ChatController::class, 'all']);
 Route::post('login', [AuthController::class, 'login']);
+ Route::get('alluser', [ChatController::class, 'all_2']);
 //Route::post('login_2', [AuthController::class, 'login_2']);
 
 
@@ -34,6 +35,7 @@ Route::group(['middleware'=>'auth:api'], function(){
     Route::post('sendMessageAudio', [MessageController::class, 'sendMessageAudio']);
     Route::post('sendMessage', [MessageController::class, 'sendMessage']);
     Route::get('all_2', [ChatController::class, 'all_2']);
+    Route::post('storeChat', [ChatController::class, 'store']);
     Route::get('logout', [AuthController::class, 'logout']);
     Route::get('user/{id}', [AuthController::class, 'show']);
     Route::get('chatsAuthU/{id}', [ChatController::class, 'allAuthU']);
@@ -41,4 +43,5 @@ Route::group(['middleware'=>'auth:api'], function(){
     Route::get('subChatAuthM/{id}', [ChatController::class, 'subAllAuthM']);
     Route::get('getMessage/{id}', [MessageController::class, 'show']);
 	Route::get('download/{id}', [MessageController::class, 'download']);
+	Route::get('getMessageShow/{id}', [MessageController::class, 'getMessage']);
 });
