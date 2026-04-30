@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Chat extends Model
 {
     use HasFactory;
-
+	public $timestamps = false;
     protected $table = 'pgrw_chats';
     protected $primaryKey = 'chat_id';
     protected $fillable = ['fecha', 

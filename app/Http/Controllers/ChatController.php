@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Hash;
+use App\Models\Chat;
+use App\Models\Message;
 
 class ChatController extends Controller
 {
@@ -15,12 +19,78 @@ class ChatController extends Controller
     {   
         //
     }
+	
+	public function newConsulta(Request $request) 
+	{
+		\DB::beginTransaction();
+		$validator = Validator::make($request->input(), [
+            'tipoConsulta'=>'required',
+            'asunto'=>'required|max:255',
+			'nombre'=>'required',
+			'cargo'=>'required',
+			'telefono'=>'numeric',			
+        ]);
+        
+        if($validator->fails()){
+            return response()->json(['errors' => $validator->errors(),'res' => false]);
+        }
+		
+		try{
+		  	$chat = new Chat();
+			$chat->fecha     = date('Y-m-d h:m:s');
+			$chat->emisor_id = $request->emisorId;
+			$chat->receptor_id = 4;
+			$chat->estatus     = 0;
+			$chat->observacion = $request->tipoConsulta.':'.$request->asunto;
+			$chat->cargo = $request->cargo;
+			$chat->nro_contacto = $request->telefono;
+			$chat->nombre_solicitante = $request->nombre;
+			$chat->save();
+			
+			$message = new Message();
+			$message->chat_id     = $chat->chat_id;
+			$message->fecha       =  date('Y-m-d h:m:s');
+			$message->mensaje     = $chat->observacion;
+			$message->emisor_id   = $chat->emisor_id;
+			$message->receptor_id = $chat->receptor_id;
+			$message->estatus     = 0;
+			$message->attachment  = 0;
+			$message->ogg         = null;
+			$message->delete      = 0;
+			$message->save();			
+			
+			$res = true;
+			$getmessage = 'Chat creado correctamente';
+			broadcast(new \App\Events\NewMessage($message));
+		  \DB::commit();
+		}catch(Exception $e){
+			$res = false;
+			$message = 'Chat no pudo ser creado correctamente';
+			error_log('Chat no pudo ser creado correctamente', $e);
+		  \DB::rollBack();
+		}
+		
+		 return response()->json([
+                'res' => $res, 
+                    'user'=> auth()->user(),
+                       'message' => $getmessage]);
+	}
 
     public function subAllAuthM($emisor_id){
          $result = \DB::table('pgrw_chats')
-                        ->select('pgrw_chats_mensajes.chat_id', 'pgrw_chats_mensajes.fecha','pgrw_chats.chat_id', 
-                            'pgrw_chats.emisor_id', 'pgrw_chats.receptor_id', 'pgrw_chats.observacion', 'pgrw_usuarios.nombres', 
-                                'pgrw_usuarios.apellidos', 'pgrw_usuarios.avatar', 'pgrw_usuarios.conectado', 
+                        ->select('pgrw_chats_mensajes.chat_id', 
+								 'pgrw_chats_mensajes.fecha',
+								 'pgrw_chats.chat_id',
+								 'pgrw_chats.cargo', 
+							     'pgrw_chats.nro_contacto', 
+							     'pgrw_chats.nombre_solicitante',
+                                 'pgrw_chats.emisor_id', 
+								 'pgrw_chats.receptor_id', 
+								 'pgrw_chats.observacion', 
+								 'pgrw_usuarios.nombres', 
+                                 'pgrw_usuarios.apellidos', 
+								 'pgrw_usuarios.avatar', 
+								 'pgrw_usuarios.conectado', 
                                     \DB::raw("COUNT(DISTINCT IF((pgrw_chats_mensajes.estatus = 0 && pgrw_chats_mensajes.receptor_id = ".auth()->user()->usuario_id."), pgrw_chats_mensajes.mensaje_id, 0)) - 1 AS num_mensajes"),
                                         //\DB::raw("MAX(pgrw_chats_mensajes.fecha) AS fecha_order"), 
                                             'pgrw_chats_mensajes.mensaje_id')
@@ -39,7 +109,19 @@ class ChatController extends Controller
     public function allAuthM($receptor_id){
         
         $result = \DB::table('pgrw_chats')
-                            ->select('pgrw_chats_mensajes.chat_id', 'pgrw_chats_mensajes.fecha','pgrw_chats.chat_id', 'pgrw_chats.emisor_id', 'pgrw_chats.receptor_id', 'pgrw_chats.observacion', 'pgrw_usuarios.nombres', 'pgrw_usuarios.apellidos', 'pgrw_usuarios.avatar', 'pgrw_usuarios.conectado', 
+                            ->select('pgrw_chats_mensajes.chat_id', 
+									 'pgrw_chats_mensajes.fecha',
+									 'pgrw_chats.chat_id', 
+									 'pgrw_chats.cargo', 
+							 		 'pgrw_chats.nro_contacto', 
+							         'pgrw_chats.nombre_solicitante',
+									 'pgrw_chats.emisor_id', 
+									 'pgrw_chats.receptor_id', 
+									 'pgrw_chats.observacion', 
+									 'pgrw_usuarios.nombres', 
+									 'pgrw_usuarios.apellidos', 
+									 'pgrw_usuarios.avatar', 
+									 'pgrw_usuarios.conectado', 
                                 \DB::raw("COUNT(DISTINCT IF((pgrw_chats_mensajes.estatus = 0 && pgrw_chats_mensajes.receptor_id = ".auth()->user()->usuario_id."), pgrw_chats_mensajes.mensaje_id, 0)) - 1 AS num_mensajes"), 
                                     \DB::raw("MAX(pgrw_chats_mensajes.fecha) AS fecha_order"), 
                                         'pgrw_chats_mensajes.mensaje_id')
@@ -59,7 +141,19 @@ class ChatController extends Controller
     public function allAuthU($emisor_id)
     {
         $result = \DB::table('pgrw_chats')
-                    ->select('pgrw_chats_mensajes.chat_id', 'pgrw_chats_mensajes.fecha','pgrw_chats.chat_id', 'pgrw_chats.emisor_id', 'pgrw_chats.receptor_id', 'pgrw_chats.observacion', 'pgrw_usuarios.nombres', 'pgrw_usuarios.apellidos', 'pgrw_usuarios.avatar', 'pgrw_usuarios.conectado', 
+                    ->select('pgrw_chats_mensajes.chat_id', 
+							 'pgrw_chats_mensajes.fecha',
+							 'pgrw_chats.chat_id', 
+							 'pgrw_chats.cargo', 
+							 'pgrw_chats.nro_contacto', 
+							 'pgrw_chats.nombre_solicitante',
+							 'pgrw_chats.emisor_id',
+							 'pgrw_chats.receptor_id', 
+							 'pgrw_chats.observacion', 
+							 'pgrw_usuarios.nombres', 
+							 'pgrw_usuarios.apellidos', 
+							 'pgrw_usuarios.avatar', 
+							 'pgrw_usuarios.conectado', 
                             \DB::raw("COUNT(DISTINCT IF((pgrw_chats_mensajes.estatus = 0 && pgrw_chats_mensajes.receptor_id = ".auth()->user()->usuario_id."), pgrw_chats_mensajes.mensaje_id, 0)) - 1 AS num_mensajes"), 
                                 //\DB::raw("MAX(pgrw_chats_mensajes.fecha) AS fecha_order"), 
                                     'pgrw_chats_mensajes.mensaje_id')

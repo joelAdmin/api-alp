@@ -22,9 +22,10 @@ use App\Http\Controllers\MessageController;
 //Broadcast::routes(["prefix" => "api", "middleware" => "auth:api"]);
 //Broadcast::routes(['middleware' => ['auth:sanctum']]);
 Route::get('all', [ChatController::class, 'all']);
+Route::get('alluser', [ChatController::class, 'all_2']);
 Route::post('login', [AuthController::class, 'login']);
- Route::get('alluser', [ChatController::class, 'all_2']);
 //Route::post('login_2', [AuthController::class, 'login_2']);
+//Route::get('newConsulta', [ChatController::class, 'newConsulta']);
 
 
 
@@ -44,4 +45,5 @@ Route::group(['middleware'=>'auth:api'], function(){
     Route::get('getMessage/{id}', [MessageController::class, 'show']);
 	Route::get('download/{id}', [MessageController::class, 'download']);
 	Route::get('getMessageShow/{id}', [MessageController::class, 'getMessage']);
+	Route::post('newConsulta', [ChatController::class, 'newConsulta']);
 });

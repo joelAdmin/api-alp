@@ -16,6 +16,8 @@ class MessageController extends Controller
                                                 ->where('delete', 0)
                                                     ->where('chat_id', $chat_id)
                                                         ->get();
+
+//$result = $result1->union($result2)->get();
         Message::where('chat_id', $chat_id)->where('receptor_id', auth()->user()->usuario_id)->update(['estatus'=> 1]);
 
         return response()->json(['res'=>true, 'message'=>'success', 'result'=>$result], 200);
