@@ -28,18 +28,79 @@ El proyecto utiliza una estructura de tablas personalizada con el prefijo `pgrw_
 
 ---
 
-## 📡 Integración de WebSockets
+## 📡 Integración de WebSockets y Real-Time
 
-El sistema utiliza un servidor de WebSockets independiente para la transmisión de eventos.
+El sistema utiliza una arquitectura de eventos para comunicación bidireccional, configurada para trabajar con un servidor de WebSockets dedicado.
 
-**Configuración (`config/broadcasting.php`):**
-*   **Host:** `wss.jlssystem.com`
-*   **Puerto:** `6001`
-*   **Canales Privados:** Protegidos mediante `auth:api`.
+### 1. Configuración del Driver (`config/broadcasting.php`)
+El driver `pusher` está personalizado para apuntar a la infraestructura de **JLS System** en lugar de los servidores de Pusher HQ:
 
-**Eventos Principales:**
-1.  **`NewMessage`**: Transmitido en el canal privado `new-message.{receptor_id}`.
-2.  **`Mensaje`**: Transmitido en el canal público `MensajeChannel`.
+```php
+'pusher' => [
+    'driver' => 'pusher',
+    'key' => env('PUSHER_APP_KEY'),
+    'secret' => env('PUSHER_APP_SECRET'),
+    'app_id' => env('PUSHER_APP_ID'),
+    'options' => [
+        'host' => 'wss.jlssystem.com',
+        'port' => 6001, 
+        'scheme' => 'https',
+        'useTLS' => true,
+        'encrypted' => true,
+        'curl_options' => [
+            CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_SSL_VERIFYPEER => false,
+        ],
+    ],
+],
+```
+
+### 2. Autorización de Canales (`routes/channels.php`)
+La seguridad de las suscripciones se maneja mediante clausuras de autorización que validan la identidad del usuario a través de su `usuario_id`:
+
+```php
+// Solo el receptor del mensaje puede escuchar su canal privado
+Broadcast::channel('new-message.{id}', function ($user, $id) {
+    return (int) $user->usuario_id === (int) $id;
+});
+```
+
+### 3. Ejemplo de Implementación
+
+#### Lado del Servidor (Emisión)
+Cuando se guarda un mensaje, se dispara el evento `NewMessage`:
+```php
+// En el controlador o servicio
+$message = Message::create([...]);
+broadcast(new \App\Events\NewMessage($message))->toOthers();
+```
+
+#### Lado del Cliente (Recepción con Laravel Echo)
+El frontend debe suscribirse al canal privado usando el token de Passport:
+```javascript
+import Echo from 'laravel-echo';
+window.Pusher = require('pusher-js');
+
+const echo = new Echo({
+    broadcaster: 'pusher',
+    key: process.env.MIX_PUSHER_APP_KEY,
+    wsHost: 'wss.jlssystem.com',
+    wsPort: 6001,
+    forceTLS: true,
+    disableStats: true,
+    authEndpoint: '/api/broadcasting/auth',
+    auth: {
+        headers: {
+            Authorization: 'Bearer ' + token
+        }
+    }
+});
+
+echo.private(`new-message.${usuarioId}`)
+    .listen('.NewMessage', (e) => {
+        console.log('Nuevo mensaje recibido:', e.message);
+    });
+```
 
 ---
 
